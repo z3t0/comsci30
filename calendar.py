@@ -86,7 +86,7 @@ else:
 
 print "-----"
 
-if d.weekday > 4:
+if d.weekday() > 4:
     print str(d) + " is a weekday: \t FALSE"
     print str(d) + " is on the weekend: \t TRUE"
 
