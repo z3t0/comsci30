@@ -2,9 +2,6 @@
 #
 # Ballistics. Create Cannonball particles that reasonably observe the laws of Physics!
 #-------------------------------------------------------------------------
-
-from pprint import pprint
-
 import pygame
 import sys
 import random
@@ -172,7 +169,7 @@ target.hit = False
 # spawns target
 def spawn():
     target.pos = target.target.get_rect()
-    target.pos.x = random.randint(200, 800)
+    target.pos.x = random.randint(200, 700)
     target.pos.y = random.randint(90, 540)
 
 spawn() # spawns initial target
@@ -297,7 +294,8 @@ while running:
 
         # GUI
         screen.blit(power.image[power.count - 1], (20, 10))
-        screen.blit(cannonball_count_gui[cannonball_count - 1], (280, 30))
+        if cannonball_count > 0:
+            screen.blit(cannonball_count_gui[cannonball_count - 1], (280, 30))
         if target.count > 0:
             screen.blit(target.image[target.count - 1], (500, 30))
        
@@ -322,10 +320,11 @@ while running:
             if x.alive == False:
                 explosions.remove(x)                      
 
-        cannon_location = cannon[cannon_image].get_rect().move(CANNON_X, CANNON_Y)
-        screen.blit(cannon[cannon_image], cannon_location)
 
-    # Smoke rendering : outside of loop so it can continue during pause screen
+    # Smoke and cannon rendering : outside of loop so it can continue during pause screen
+    cannon_location = cannon[cannon_image].get_rect().move(CANNON_X, CANNON_Y)
+    screen.blit(cannon[cannon_image], cannon_location)
+
     for x in smoke:
         for p in x.particles:
                 screen.blit(pygame.transform.scale(p.image, (p.size, p.size)), p.pos)
