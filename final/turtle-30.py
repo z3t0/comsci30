@@ -22,7 +22,7 @@ wn.title("Pattern 30")
 
 
 for i in range(0, 6):
-    drawPolygon(0, 0, 6, 100, 360 / 6.0 * i)
+    drawPolygon(0, 0, 6, 100, 360 / 6.0 * i + 23) # constant added to replicate tilting effect
 
 
 wn.exitonclick()
