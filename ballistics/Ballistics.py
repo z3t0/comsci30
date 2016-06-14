@@ -3,6 +3,8 @@
 # Ballistics. Create Cannonball particles that reasonably observe the laws of Physics!
 #-------------------------------------------------------------------------
 
+from pprint import pprint
+
 import pygame
 import sys
 import random
@@ -38,7 +40,6 @@ POWER_CONSTANT = 3
 
 # Text objects
 my_font = pygame.font.SysFont("monospace", 25)
-report = my_font.render("My text will say this", 1, (0, 0, 0))
 paused_text = my_font.render("Game over. Press Enter to Play again", 1, (0.5, 0, 0))
 
 # Load the cannonball image
@@ -56,53 +57,60 @@ for x in range(4):
     smoke_img.append(pygame.image.load("smoke" + str(x+1) +".png"))
 
 class Particle(object):
-    def __init__(self, x, y):
-        self.image = 0
-        self.x = x
-        self.y = y
+
+    def __init__(self, emit_x, emit_y):
+        self.type = random.randint(1, 4)
+        self.x = random.randint(-5, 5)
+        self.y = -3
+        self.image = smoke_img[self.type - 1]
         self.alive = True
+        self.pos = self.image.get_rect().move(emit_x, emit_y)
+        if self.type == 1:
+            self.lifetime = random.randint(15,25)
+            self.size = 25
+        if self.type == 2:
+            self.lifetime = random.randint(20,30)
+            self.size = 20
+        if self.type == 3:
+            self.lifetime = random.randint(20,30)
+            self.size = 10
+        if self.type == 4:
+            self.lifetime = random.randint(20,35)
+            self.size = 10
+
+        self.countdown = random.randint(0,5)
+
+        self.steps = 0
 
     def move(self):
-        self.x = rand.randint(self.x - 5, self.x + 5)
-        self.y = rand.randint(self.y + 1, self.y + 10)
-
-        if self.image == 4
-            self.alive = False
-
+        if self.countdown > 0:
+            self.countdown -= 1
         else:
-            self.image = random.randint(self.image, 4)
+            self.steps += 1
+            if self.steps == self.lifetime:
+                self.alive = False
+            self.x = random.randint(-3, 3)
+            self.pos = self.pos.move(self.x, self.y)
 
+# Hold all smoke particle lists
+smoke = []
 
-
-class Smoke (object):
-    def __init__ (self, x, y):
+class Smoke(object):
+    def __init__(self, x, y,):
         self.x = x
         self.y = y
+        self.count = 0
+        self.max_count = 800 # about 6 seconds
+        self.delete = False
         self.particles = []
 
+
         for x in range(100):
-            self.particles.append((0, smoke_img[0]))
-
-    def move(self):
-        for p in self.particles:
-            t = particles [p]
-
-            num = t[0]
-            img = t[1]
-
-            if num == 4:
-                particles.remove(p)
-            else:
-                i = random.randint(num, 3) # next sprite
-                particles.remove(p)
-                x = random.randint(self.x - 5, self.x + 5)                
-                y = random.randint(self.x, self.y + 5)                
-                particle = smoke_img[i].move(x, y)
-                new_t = (i, particle)
-                particles.append(new_t)
+            self.particles.append(Particle(self.x, self.y))
+            self.count +=1
+        smoke.append(self)
 
 
-smoke_example = Smoke(200,200)
 
 # Load a list of sprite images for the cannon ball counter
 cannonball_count_gui = []
@@ -178,8 +186,6 @@ cannon_image = 2
 running = True
 
 # Cannonball class - one instance of this class created per shot
-
-
 class Ball(object):
 
     def __init__(self, image, dir_x, dir_y, emit_x, emit_y):
@@ -200,10 +206,11 @@ class Ball(object):
             self.alive = False
 
         if self.will_collide == 1:
-            self.pos.bottom = 558
+            self.pos.bottom = 577
             self.pos.x += self.x
             self.alive = False
-
+            self.smoke = Smoke(self.pos.x, 540)
+            
         else:
             self.y += GRAVITY
             self.pos = self.pos.move(self.x, self.y)
@@ -243,10 +250,36 @@ while running:
                 shots.append(c)
                 cannonball_count -= 1
 
-    if paused == True:
+    if paused == True and len(shots) < 1:
         # Game is paused
         screen.blit(background_report, background_report_pos)
         screen.blit(paused_text, (200, 250))
+
+        # Create Report
+        report1 = my_font.render("In 20 shots, you hit " + str(target.count) + " targets.", 1, (0, 0, 0))
+        percentage = round(target.count  * 1.0 / 20 * 100)
+        report2 = my_font.render("That is " + str(percentage) + "% accuracy", 1, (0, 0, 0))
+        
+        if percentage >= 95:
+            grade = "A +"
+        elif percentage >= 85:
+            grade = "A"
+        elif percentage >= 70:
+            grade = "B"
+        elif percentage >=60:
+            grade = "C"
+        elif percentage >=50:
+            grade = "D"
+        elif percentage >=30:
+            grade = "E"
+        else:
+            grade = "F"
+        report3 = my_font.render("GRADE " + grade, 1, (0, 0, 0))
+
+        screen.blit(report1, (200, 350))
+        screen.blit(report2, (200, 400))
+        screen.blit(report3, (200, 450))
+
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_RETURN:
@@ -267,8 +300,7 @@ while running:
         screen.blit(cannonball_count_gui[cannonball_count - 1], (280, 30))
         if target.count > 0:
             screen.blit(target.image[target.count - 1], (500, 30))
-        screen.blit(report, (200, 250))
-
+       
         # add target
         screen.blit(target.target, (target.pos.x, target.pos.y))
 
@@ -288,13 +320,32 @@ while running:
             screen.blit(explosion_img[x.image], (x.x, x.y))
             x.next_image()
             if x.alive == False:
-                explosions.remove(x)
-
-        # Smoke rendering
-
+                explosions.remove(x)                      
 
         cannon_location = cannon[cannon_image].get_rect().move(CANNON_X, CANNON_Y)
         screen.blit(cannon[cannon_image], cannon_location)
+
+    # Smoke rendering : outside of loop so it can continue during pause screen
+    for x in smoke:
+        for p in x.particles:
+                screen.blit(pygame.transform.scale(p.image, (p.size, p.size)), p.pos)
+                p.move()
+                if p.alive == False:
+                    x.particles.remove(p)
+                    x.particles.append(Particle(x.x, x.y))
+                    x.count += 1
+                if x.count >= x.max_count:
+                    x.delete = True
+
+    # Create new list for smoke
+    new_list = []
+    for x in smoke:
+        if x.delete == True:
+            pass
+        else:
+            new_list.append(x)
+
+    smoke = new_list
 
     # Update the display and delay for animation
     pygame.display.update()
